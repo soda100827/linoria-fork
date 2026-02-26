@@ -2100,64 +2100,7 @@ do
             Library:AddToolTip(Info.Tooltip, SliderOuter)
         end
 
-        function Slider:UpdateColors()
-            Fill.BackgroundColor3 = Library.AccentColor;
-            Fill.BorderColor3 = Library.AccentColorDark;
-        end;
-
         function Slider:Display()
-            local Suffix = Info.Suffix or '';
-
-            if Info.Compact then
-                DisplayLabel.Text = Info.Text .. ': ' .. Slider.Value .. Suffix
-            elseif Info.HideMax then
-                DisplayLabel.Text = string.format('%s', Slider.Value .. Suffix)
-            else
-                DisplayLabel.Text = string.format('%s/%s', Slider.Value .. Suffix, Slider.Max .. Suffix);
-            end
-
-            local X = math.ceil(Library:MapValue(Slider.Value, Slider.Min, Slider.Max, 0, Slider.MaxSize));
-            Fill.Size = UDim2.new(0, X, 1, 0);
-
-            HideBorderRight.Visible = not (X == Slider.MaxSize or X == 0);
-        end;
-
-        function Slider:OnChanged(Func)
-            Slider.Changed = Func;
-            Func(Slider.Value);
-        end;
-
-        local function Round(Value)
-            if Slider.Rounding == 0 then
-                return math.floor(Value);
-            end;
-
-
-            return tonumber(string.format('%.' .. Slider.Rounding .. 'f', Value))
-        end;
-
-        function Slider:GetValueFromXOffset(X)
-            return Round(Library:MapValue(X, 0, Slider.MaxSize, Slider.Min, Slider.Max));
-        end;
-
-        function Slider:SetValue(Str)
-            local Num = tonumber(Str);
-
-            if (not Num) then
-                return;
-            end;
-
-            Num = math.clamp(Num, Slider.Min, Slider.Max);
-
-            Slider.Value = Num;
-            Slider:Display();
-
-            Library:SafeCallback(Slider.Callback, Slider.Value);
-            Library:SafeCallback(Slider.Changed, Slider.Value);
-        end;
-
-        SliderInner.InputBegan:Connect(function(Input)
-            if Input.UserInputType == Enum.UserInputType.MouseButton1 and not Library:MouseIsOverOpenedFrame() then
             local Suffix = Info.Suffix or ''
             ValueLabel.Text = string.format('%s/%s%s', Slider.Value, Slider.Max, Suffix)
             
@@ -2192,12 +2135,21 @@ do
 
                 Update()
 
-                while InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
-                    Update()
-                    RenderStepped:Wait()
-                end
+                local Connection
+                Connection = InputService.InputChanged:Connect(function(Input)
+                    if Input.UserInputType == Enum.UserInputType.MouseMovement then
+                        Update()
+                    end
+                end)
 
-                Library:AttemptSave()
+                local EndConnection
+                EndConnection = InputService.InputEnded:Connect(function(Input)
+                    if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        Connection:Disconnect()
+                        EndConnection:Disconnect()
+                        Library:AttemptSave()
+                    end
+                end)
             end
         end)
 
@@ -2572,11 +2524,6 @@ end
 -- < Create other UI elements >
 do
     Library.NotificationArea = Library:Create('Frame', {
-        BackgroundTransparency = 1;
-        Position = UDim2.new(0, 0, 0, 40);
-        Size = UDim2.new(0, 300, 0, 200);
-        ZIndex = 100;
-        Parent = ScreenGui;
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 0, 0, 40),
         Size = UDim2.new(0, 300, 0, 200),
@@ -3092,7 +3039,6 @@ function Library:CreateWindow(...)
             local BoxInner = Library:Create('Frame', {
                 BackgroundColor3 = Library.BackgroundColor,
                 BorderColor3 = Color3.new(0, 0, 0),
-                -- BorderMode = Enum.BorderMode.Inset,
                 Size = UDim2.new(1, -2, 1, -2),
                 Position = UDim2.new(0, 1, 0, 1),
                 ZIndex = 4,
@@ -3142,22 +3088,34 @@ function Library:CreateWindow(...)
             function Groupbox:Resize()
                 local Size = 0
 
-                for _, Element in pairs(Groupbox.Container:GetChildren()) do
+                for _, Element in pairs(Container:GetChildren()) do
                     if (not Element:IsA('UIListLayout')) and Element.Visible then
-            Groupbox:Resize();
+                        Size = Size + Element.Size.Y.Offset
+                    end
+                end
 
-            Tab.Groupboxes[Info.Name] = Groupbox;
+                BoxOuter.Size = UDim2.new(1, 0, 0, 20 + Size + 2)
+            end
 
-            return Groupbox;
-        end;
+            Groupbox.Container = Container
+
+            setmetatable(Groupbox, BaseGroupbox)
+
+            Groupbox:AddBlank(3)
+            Groupbox:Resize()
+
+            Tab.Groupboxes[Info.Name] = Groupbox
+
+            return Groupbox
+        end
 
         function Tab:AddLeftGroupbox(Name)
-            return Tab:AddGroupbox({ Side = 1; Name = Name; });
-        end;
+            return Tab:AddGroupbox({ Side = 1, Name = Name })
+        end
 
         function Tab:AddRightGroupbox(Name)
-            return Tab:AddGroupbox({ Side = 2; Name = Name; });
-        end;
+            return Tab:AddGroupbox({ Side = 2, Name = Name })
+        end
 
         function Tab:AddTabbox(Info)
             local Tabbox = {
