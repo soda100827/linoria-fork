@@ -46,9 +46,11 @@ local RainbowStep = 0
 local Hue = 0
 
 table.insert(Library.Signals, RenderStepped:Connect(function(Delta)
+    if not Library.Toggled and not Library.Watermark.Visible then return end -- Optimization: don't calculate if UI is hidden
+
     RainbowStep = RainbowStep + Delta
 
-    if RainbowStep >= (1 / 60) then
+    if RainbowStep >= (1 / 30) then -- Throttle to 30 FPS for performance
         RainbowStep = 0
 
         Hue = Hue + (1 / 400);
@@ -3500,7 +3502,7 @@ function Library:CreateWindow(...)
     });
 
     local TransparencyCache = {};
-    local Toggled = false;
+    Library.Toggled = false;
     local Fading = false;
 
     function Library:Toggle()
@@ -3510,10 +3512,10 @@ function Library:CreateWindow(...)
 
         local FadeTime = Config.MenuFadeTime;
         Fading = true;
-        Toggled = (not Toggled);
-        ModalElement.Modal = Toggled;
+        Library.Toggled = (not Library.Toggled);
+        ModalElement.Modal = Library.Toggled;
 
-        if Toggled then
+        if Library.Toggled then
             -- A bit scuffed, but if we're going from not toggled -> toggled we want to show the frame immediately so that the fade is visible.
             Outer.Visible = true;
 
@@ -3532,7 +3534,7 @@ function Library:CreateWindow(...)
                 CursorOutline.Color = Color3.new(0, 0, 0);
                 CursorOutline.Visible = true;
 
-                while Toggled and ScreenGui.Parent do
+                while Library.Toggled and ScreenGui.Parent do
                     InputService.MouseIconEnabled = false;
 
                     local mPos = InputService:GetMouseLocation();
@@ -3587,13 +3589,13 @@ function Library:CreateWindow(...)
                     continue;
                 end;
 
-                TweenService:Create(Desc, TweenInfo.new(FadeTime, Enum.EasingStyle.Linear), { [Prop] = Toggled and Cache[Prop] or 1 }):Play();
+                TweenService:Create(Desc, TweenInfo.new(FadeTime, Enum.EasingStyle.Linear), { [Prop] = Library.Toggled and Cache[Prop] or 1 }):Play();
             end;
         end;
 
         task.wait(FadeTime);
 
-        Outer.Visible = Toggled;
+        Outer.Visible = Library.Toggled;
 
         Fading = false;
     end
@@ -3615,14 +3617,22 @@ function Library:CreateWindow(...)
     return Window;
 end;
 
+local PlayerUpdateQueued = false
 local function OnPlayerChange()
-    local PlayerList = GetPlayersString();
+    if PlayerUpdateQueued then return end
+    PlayerUpdateQueued = true
 
-    for _, Value in next, Options do
-        if Value.Type == 'Dropdown' and Value.SpecialType == 'Player' then
-            Value:SetValues(PlayerList);
+    task.delay(1, function()
+        local PlayerList = GetPlayersString();
+
+        for _, Value in next, Options do
+            if Value.Type == 'Dropdown' and Value.SpecialType == 'Player' then
+                Value:SetValues(PlayerList);
+            end;
         end;
-    end;
+
+        PlayerUpdateQueued = false
+    end)
 end;
 
 Players.PlayerAdded:Connect(OnPlayerChange);

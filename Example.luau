@@ -389,26 +389,28 @@ local FrameTimer = tick()
 local FrameCounter = 0;
 local FPS = 60;
 
-local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(function()
-    FrameCounter += 1;
+task.spawn(function()
+    while not Library.Unloaded do
+        FrameCounter += 1;
 
-    if (tick() - FrameTimer) >= 1 then
-        FPS = FrameCounter;
-        FrameTimer = tick();
-        FrameCounter = 0;
-    end;
+        if (tick() - FrameTimer) >= 1 then
+            FPS = FrameCounter;
+            FrameTimer = tick();
+            FrameCounter = 0;
+        end;
 
-    Library:SetWatermark(('LinoriaLib demo | %s fps | %s ms'):format(
-        math.floor(FPS),
-        math.floor(game:GetService('Stats').Network.ServerStatsItem['Data Ping']:GetValue())
-    ));
-end);
+        Library:SetWatermark(('LinoriaLib demo | %s fps | %s ms'):format(
+            math.floor(FPS),
+            math.floor(game:GetService('Stats').Network.ServerStatsItem['Data Ping']:GetValue())
+        ));
+
+        task.wait(0.5) -- Update twice per second
+    end
+end)
 
 Library.KeybindFrame.Visible = true; -- todo: add a function for this
 
 Library:OnUnload(function()
-    WatermarkConnection:Disconnect()
-
     print('Unloaded!')
     Library.Unloaded = true
 end)
