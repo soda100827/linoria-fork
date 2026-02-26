@@ -1,6 +1,11 @@
-local Library = loadstring(readfile('Library.luau'))()
-local ThemeManager = loadstring(readfile('addons/ThemeManager.luau'))()
-local SaveManager = loadstring(readfile('addons/SaveManager.luau'))()
+-- New example script written by wally
+-- You can suggest changes with a pull request or something
+
+local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
+
+local Library = loadstring(game:HttpGet(repo .. 'Library.luau'))()
+local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.luau'))()
+local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.luau'))()
 
 local Window = Library:CreateWindow({
     -- Set Center to true if you want the menu to appear in the center
@@ -20,7 +25,7 @@ local Window = Library:CreateWindow({
 -- HOWEVER, using Toggles/Options.INDEX:OnChanged(function(Value) ... ) is the RECOMMENDED way to do this.
 -- I strongly recommend decoupling UI code from logic code. i.e. Create your UI elements FIRST, and THEN setup :OnChanged functions later.
 
--- You do not have to set your tabs & groups up this way, just a preference.
+-- You do not have to set your tabs & groups up this way, just a prefrence.
 local Tabs = {
     -- Creates a new tab titled Main
     Main = Window:AddTab('Main'),
@@ -240,7 +245,7 @@ LeftGroupBox:AddDropdown('MyMultiDropdown', {
 Options.MyMultiDropdown:OnChanged(function()
     -- print('Dropdown got changed. New value:', )
     print('Multi dropdown got changed:')
-    for key, value in pairs(Options.MyMultiDropdown.Value) do
+    for key, value in next, Options.MyMultiDropdown.Value do
         print(key, value) -- should print something like This, true
     end
 end)
@@ -325,7 +330,7 @@ end)
 
 task.spawn(function()
     while true do
-        task.wait(1)
+        wait(1)
 
         -- example for checking if a keybind is being pressed
         local state = Options.KeyPicker:GetState()
@@ -340,66 +345,66 @@ end)
 Options.KeyPicker:SetValue({ 'MB2', 'Toggle' }) -- Sets keybind to MB2, mode to Hold
 
 -- Long text label to demonstrate UI scrolling behaviour.
-local LeftGroupBox2 = Tabs.Main:AddLeftGroupbox('Groupbox #2')
+local LeftGroupBox2 = Tabs.Main:AddLeftGroupbox('Groupbox #2');
 LeftGroupBox2:AddLabel('Oh no...\nThis label spans multiple lines!\n\nWe\'re gonna run out of UI space...\nJust kidding! Scroll down!\n\n\nHello from below!', true)
 
 local TabBox = Tabs.Main:AddRightTabbox() -- Add Tabbox on right side
 
 -- Anything we can do in a Groupbox, we can do in a Tabbox tab (AddToggle, AddSlider, AddLabel, etc etc...)
 local Tab1 = TabBox:AddTab('Tab 1')
-Tab1:AddToggle('Tab1Toggle', { Text = 'Tab1 Toggle' })
+Tab1:AddToggle('Tab1Toggle', { Text = 'Tab1 Toggle' });
 
 local Tab2 = TabBox:AddTab('Tab 2')
-Tab2:AddToggle('Tab2Toggle', { Text = 'Tab2 Toggle' })
+Tab2:AddToggle('Tab2Toggle', { Text = 'Tab2 Toggle' });
 
 -- Dependency boxes let us control the visibility of UI elements depending on another UI elements state.
 -- e.g. we have a 'Feature Enabled' toggle, and we only want to show that features sliders, dropdowns etc when it's enabled!
 -- Dependency box example:
-local RightGroupbox = Tabs.Main:AddRightGroupbox('Groupbox #3')
-RightGroupbox:AddToggle('ControlToggle', { Text = 'Dependency box toggle' })
+local RightGroupbox = Tabs.Main:AddRightGroupbox('Groupbox #3');
+RightGroupbox:AddToggle('ControlToggle', { Text = 'Dependency box toggle' });
 
-local Depbox = RightGroupbox:AddDependencyBox()
-Depbox:AddToggle('DepboxToggle', { Text = 'Sub-dependency box toggle' })
+local Depbox = RightGroupbox:AddDependencyBox();
+Depbox:AddToggle('DepboxToggle', { Text = 'Sub-dependency box toggle' });
 
 -- We can also nest dependency boxes!
--- When we do this, our SubDepbox automatically relies on the visibility of the Depbox - on top of whatever additional dependencies we set
-local SubDepbox = Depbox:AddDependencyBox()
-SubDepbox:AddSlider('DepboxSlider', { Text = 'Slider', Default = 50, Min = 0, Max = 100, Rounding = 0 })
-SubDepbox:AddDropdown('DepboxDropdown', { Text = 'Dropdown', Default = 1, Values = {'a', 'b', 'c'} })
+-- When we do this, our SupDepbox automatically relies on the visiblity of the Depbox - on top of whatever additional dependencies we set
+local SubDepbox = Depbox:AddDependencyBox();
+SubDepbox:AddSlider('DepboxSlider', { Text = 'Slider', Default = 50, Min = 0, Max = 100, Rounding = 0 });
+SubDepbox:AddDropdown('DepboxDropdown', { Text = 'Dropdown', Default = 1, Values = {'a', 'b', 'c'} });
 
 Depbox:SetupDependencies({
     { Toggles.ControlToggle, true } -- We can also pass `false` if we only want our features to show when the toggle is off!
-})
+});
 
 SubDepbox:SetupDependencies({
     { Toggles.DepboxToggle, true }
-})
+});
 
 -- Library functions
 -- Sets the watermark visibility
 Library:SetWatermarkVisibility(true)
 
 -- Example of dynamically-updating watermark with common traits (fps and ping)
-local FrameTimer = os.clock()
-local FrameCounter = 0
-local FPS = 60
+local FrameTimer = tick()
+local FrameCounter = 0;
+local FPS = 60;
 
 local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(function()
-    FrameCounter += 1
+    FrameCounter += 1;
 
-    if (os.clock() - FrameTimer) >= 1 then
-        FPS = FrameCounter
-        FrameTimer = os.clock()
-        FrameCounter = 0
-    end
+    if (tick() - FrameTimer) >= 1 then
+        FPS = FrameCounter;
+        FrameTimer = tick();
+        FrameCounter = 0;
+    end;
 
     Library:SetWatermark(('LinoriaLib demo | %s fps | %s ms'):format(
         math.floor(FPS),
         math.floor(game:GetService('Stats').Network.ServerStatsItem['Data Ping']:GetValue())
-    ))
-end)
+    ));
+end);
 
-Library.KeybindFrame.Visible = true -- todo: add a function for this
+Library.KeybindFrame.Visible = true; -- todo: add a function for this
 
 Library:OnUnload(function()
     WatermarkConnection:Disconnect()
