@@ -1,8 +1,6 @@
-local repo = 'https://raw.githubusercontent.com/soda100827/Linoria-Lib-Fork/refs/heads/main/'
-
-local Library = loadstring(game:HttpGet(repo .. 'Library.luau'))()
-local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.luau'))()
-local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.luau'))()
+local Library = loadstring(readfile('Library.luau'))()
+local ThemeManager = loadstring(readfile('addons/ThemeManager.luau'))()
+local SaveManager = loadstring(readfile('addons/SaveManager.luau'))()
 
 local Window = Library:CreateWindow({
     -- Set Center to true if you want the menu to appear in the center
